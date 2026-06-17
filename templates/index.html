@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Расчет дебита ГС</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        header { background-color: #b00000; color: white; padding: 15px; text-align: center; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .card { border-radius: 8px; border: 2px solid #cbd5e1; margin-bottom: 20px; }
+        .card-title { color: #1e3a8a; font-weight: bold; font-size: 1.1rem; }
+        .param-row { display: flex; align-items: center; margin-bottom: 10px; gap: 15px; }
+        .param-label { width: 220px; font-weight: 500; font-size: 14px; }
+        .result-box { padding: 10px; border-radius: 5px; font-weight: bold; margin-top: 10px; }
+        .res-step1 { background: #d1fae5; color: #047857; }
+        .res-step2-small { background: #dbeafe; color: #1e40af; font-size: 0.9rem; }
+        .res-q { background: #fee2e2; color: #991b1b; font-size: 1.3rem; text-align: center; }
+        input[type="range"] { flex-grow: 1; cursor: pointer; }
+        input[type="number"] { width: 100px; }
+        .disabled-overlay { opacity: 0.5; pointer-events: none; }
+    </style>
+</head>
+<body>
+    <header>
+        <h2>
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" style="width: 70px; height: 60px"> 
+            РГУ нефти и газа (НИУ) имени И. М. Губкина 
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" style="width: 70px; height: 60px">
+        </h2>
+    </header>
+
+    <div class="container-fluid px-4">
+        <div class="row">
+            <!-- ШАГ 1 -->
+            <div class="col-md-5">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title">ШАГ 1: Константы a* и b*</h5>
+                        <p class="text-muted small"><i>Определение по вертикальной скважине (Rк = 500 м)</i></p>
+                        
+                        <div class="param-row">
+                            <span class="param-label">Коэф. a_в:</span>
+                            <input type="range" id="s_av" min="0.001" max="0.1" step="0.001" value="0.0157">
+                            <input type="number" id="i_av" value="0.0157" step="0.001">
+                        </div>
+                        <div class="param-row">
+                            <span class="param-label">Коэф. b_в:</span>
+                            <input type="range" id="s_bv" min="0.00001" max="0.001" step="0.00001" value="0.00024">
+                            <input type="number" id="i_bv" value="0.00024" step="0.00001">
+                        </div>
+                        <div class="param-row">
+                            <span class="param-label">Толщина h, м:</span>
+                            <input type="range" id="s_h1" min="5" max="150" step="1" value="10">
+                            <input type="number" id="i_h1" value="10">
+                        </div>
+                        <div class="param-row">
+                            <span class="param-label">Радиус Rc, м:</span>
+                            <input type="range" id="s_rc1" min="0.05" max="0.3" step="0.01" value="0.1">
+                            <input type="number" id="i_rc1" value="0.1">
+                        </div>
+
+                        <button class="btn btn-primary w-100 my-3" onclick="calculateStep1()">1. Рассчитать константы</button>
+
+                        <div id="res_a_star" class="result-box res-step1">a* = ?</div>
+                        <div id="res_b_star" class="result-box res-step1">b* = ?</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ШАГ 2 -->
+            <div class="col-md-7">
+                <div id="step2_container" class="card shadow-sm disabled-overlay">
+                    <div class="card-body">
+                        <h5 class="card-title">ШАГ 2: Проектирование ГС</h5>
+                        <p class="text-muted small"><i>Меняйте параметры для мгновенного пересчета</i></p>
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="param-row">
+                                    <span class="param-label">Толщина h, м:</span>
+                                    <input type="range" id="s_h2" min="5" max="150" step="1" value="10">
+                                    <input type="number" id="i_h2" value="10">
+                                </div>
+                                <div class="param-row">
+                                    <span class="param-label">Длина Lг, м:</span>
+                                    <input type="range" id="s_lg" min="100" max="2000" step="10" value="600">
+                                    <input type="number" id="i_lg" value="600">
+                                </div>
+                                <div class="param-row">
+                                    <span class="param-label">Радиус Rc, м:</span>
+                                    <input type="range" id="s_rc2" min="0.05" max="0.3" step="0.01" value="0.1">
+                                    <input type="number" id="i_rc2" value="0.1">
+                                </div>
+                                <div class="param-row">
+                                    <span class="param-label">Радиус Rк.г, м:</span>
+                                    <input type="range" id="s_rk" min="300" max="3000" step="10" value="500">
+                                    <input type="number" id="i_rk" value="500">
+                                </div>
+                                <div class="param-row">
+                                    <span class="param-label">Анизотропия:</span>
+                                    <input type="range" id="s_v" min="0.1" max="1.0" step="0.05" value="0.3">
+                                    <input type="number" id="i_v" value="0.3">
+                                </div>
+                                <div class="param-row">
+                                    <span class="param-label">P пл, МПа:</span>
+                                    <input type="range" id="s_ppl" min="5" max="50" step="0.5" value="18">
+                                    <input type="number" id="i_ppl" value="18">
+                                </div>
+                                <div class="param-row">
+                                    <span class="param-label">Депрессия, МПа:</span>
+                                    <input type="range" id="s_dp" min="0.01" max="5" step="0.05" value="0.1">
+                                    <input type="number" id="i_dp" value="0.1">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-3">
+                            <div class="col-6"><div id="res_ag" class="result-box res-step2-small">a_г = ?</div></div>
+                            <div class="col-6"><div id="res_bg" class="result-box res-step2-small">b_г = ?</div></div>
+                            <div class="col-12 mt-2"><div id="res_q" class="result-box res-q">Дебит (Q) = ? тыс. м³/сут</div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let a_star = 0, b_star = 0;
+
+        function sync(sliderId, inputId, callback) {
+            const s = document.getElementById(sliderId);
+            const i = document.getElementById(inputId);
+            s.oninput = () => { i.value = s.value; callback(); };
+            i.oninput = () => { s.value = i.value; callback(); };
+        }
+
+        // Привязка слайдеров Шага 1
+        sync('s_av', 'i_av', () => {});
+        sync('s_bv', 'i_bv', () => {});
+        sync('s_h1', 'i_h1', () => {});
+        sync('s_rc1', 'i_rc1', () => {});
+
+        // Привязка слайдеров Шага 2 с авторасчетом
+        const step2Params = ['h2', 'lg', 'rc2', 'rk', 'v', 'ppl', 'dp'];
+        step2Params.forEach(p => sync(`s_${p}`, `i_${p}`, calculateStep2));
+
+        async function calculateStep1() {
+            const response = await fetch('/calculate_step1', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    av: document.getElementById('i_av').value,
+                    bv: document.getElementById('i_bv').value,
+                    h: document.getElementById('i_h1').value,
+                    rc: document.getElementById('i_rc1').value
+                })
+            });
+            const res = await response.json();
+            if (res.success) {
+                a_star = res.a_star;
+                b_star = res.b_star;
+                document.getElementById('res_a_star').innerText = `a* = ${a_star.toFixed(5)}`;
+                document.getElementById('res_b_star').innerText = `b* = ${b_star.toFixed(5)}`;
+                
+                // Синхронизация значений с шагом 2
+                document.getElementById('i_h2').value = document.getElementById('i_h1').value;
+                document.getElementById('s_h2').value = document.getElementById('i_h1').value;
+                document.getElementById('i_rc2').value = document.getElementById('i_rc1').value;
+                document.getElementById('s_rc2').value = document.getElementById('i_rc1').value;
+
+                document.getElementById('step2_container').classList.remove('disabled-overlay');
+                calculateStep2();
+            }
+        }
+
+        async function calculateStep2() {
+            if (a_star === 0) return;
+            const response = await fetch('/calculate_step2', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    a_star, b_star,
+                    h: document.getElementById('i_h2').value,
+                    lg: document.getElementById('i_lg').value,
+                    rc: document.getElementById('i_rc2').value,
+                    rk: document.getElementById('i_rk').value,
+                    v: document.getElementById('i_v').value,
+                    ppl: document.getElementById('i_ppl').value,
+                    dp: document.getElementById('i_dp').value
+                })
+            });
+            const res = await response.json();
+            if (res.success) {
+                document.getElementById('res_ag').innerText = `a_г = ${res.ag.toFixed(6)}`;
+                document.getElementById('res_bg').innerText = `b_г = ${res.bg.toFixed(8)}`;
+                document.getElementById('res_q').innerText = `Дебит (Q) = ${res.q.toFixed(2)} тыс. м³/сут`;
+            }
+        }
+    </script>
+</body>
+</html>
