@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Расчет дебита ГС</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         body { background-color: #f8fafc; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         header { background-color: #b00000; color: white; padding: 15px; text-align: center; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
@@ -19,6 +20,7 @@
         input[type="range"] { flex-grow: 1; cursor: pointer; }
         input[type="number"] { width: 100px; }
         .disabled-overlay { opacity: 0.5; pointer-events: none; }
+        .chart-container { position: relative; height: 380px; width: 100%; margin-top: 15px; }
     </style>
 </head>
 <body>
@@ -32,7 +34,6 @@
 
     <div class="container-fluid px-4">
         <div class="row">
-            <!-- ШАГ 1 -->
             <div class="col-md-5">
                 <div class="card shadow-sm">
                     <div class="card-body">
@@ -42,22 +43,22 @@
                         <div class="param-row">
                             <span class="param-label">Коэф. a_в:</span>
                             <input type="range" id="s_av" min="0.001" max="0.1" step="0.001" value="0.0157">
-                            <input type="number" id="i_av" value="0.0157" step="0.001">
+                            <input type="number" id="i_av" min="0.001" max="0.1" step="0.001" value="0.0157">
                         </div>
                         <div class="param-row">
                             <span class="param-label">Коэф. b_в:</span>
                             <input type="range" id="s_bv" min="0.00001" max="0.001" step="0.00001" value="0.00024">
-                            <input type="number" id="i_bv" value="0.00024" step="0.00001">
+                            <input type="number" id="i_bv" min="0.00001" max="0.001" step="0.00001" value="0.00024">
                         </div>
                         <div class="param-row">
                             <span class="param-label">Толщина h, м:</span>
-                            <input type="range" id="s_h1" min="5" max="150" step="1" value="10">
-                            <input type="number" id="i_h1" value="10">
+                            <input type="range" id="s_h1" min="5" max="2000" step="1" value="10">
+                            <input type="number" id="i_h1" min="5" max="2000" step="1" value="10">
                         </div>
                         <div class="param-row">
                             <span class="param-label">Радиус Rc, м:</span>
                             <input type="range" id="s_rc1" min="0.05" max="0.3" step="0.01" value="0.1">
-                            <input type="number" id="i_rc1" value="0.1">
+                            <input type="number" id="i_rc1" min="0.05" max="0.3" step="0.01" value="0.1">
                         </div>
 
                         <button class="btn btn-primary w-100 my-3" onclick="calculateStep1()">1. Рассчитать константы</button>
@@ -68,7 +69,6 @@
                 </div>
             </div>
 
-            <!-- ШАГ 2 -->
             <div class="col-md-7">
                 <div id="step2_container" class="card shadow-sm disabled-overlay">
                     <div class="card-body">
@@ -79,38 +79,38 @@
                             <div class="col-12">
                                 <div class="param-row">
                                     <span class="param-label">Толщина h, м:</span>
-                                    <input type="range" id="s_h2" min="5" max="150" step="1" value="10">
-                                    <input type="number" id="i_h2" value="10">
+                                    <input type="range" id="s_h2" min="5" max="2000" step="1" value="10">
+                                    <input type="number" id="i_h2" min="5" max="2000" step="1" value="10">
                                 </div>
                                 <div class="param-row">
                                     <span class="param-label">Длина Lг, м:</span>
-                                    <input type="range" id="s_lg" min="100" max="2000" step="10" value="600">
-                                    <input type="number" id="i_lg" value="600">
+                                    <input type="range" id="s_lg" min="100" max="10000" step="10" value="600">
+                                    <input type="number" id="i_lg" min="100" max="10000" step="10" value="600">
                                 </div>
                                 <div class="param-row">
                                     <span class="param-label">Радиус Rc, м:</span>
                                     <input type="range" id="s_rc2" min="0.05" max="0.3" step="0.01" value="0.1">
-                                    <input type="number" id="i_rc2" value="0.1">
+                                    <input type="number" id="i_rc2" min="0.05" max="0.3" step="0.01" value="0.1">
                                 </div>
                                 <div class="param-row">
                                     <span class="param-label">Радиус Rк.г, м:</span>
-                                    <input type="range" id="s_rk" min="300" max="3000" step="10" value="500">
-                                    <input type="number" id="i_rk" value="500">
+                                    <input type="range" id="s_rk" min="3" max="20000" step="10" value="500">
+                                    <input type="number" id="i_rk" min="3" max="20000" step="10" value="500">
                                 </div>
                                 <div class="param-row">
                                     <span class="param-label">Анизотропия:</span>
                                     <input type="range" id="s_v" min="0.1" max="1.0" step="0.05" value="0.3">
-                                    <input type="number" id="i_v" value="0.3">
+                                    <input type="number" id="i_v" min="0.1" max="1.0" step="0.05" value="0.3">
                                 </div>
                                 <div class="param-row">
                                     <span class="param-label">P пл, МПа:</span>
-                                    <input type="range" id="s_ppl" min="5" max="50" step="0.5" value="18">
-                                    <input type="number" id="i_ppl" value="18">
+                                    <input type="range" id="s_ppl" min="0.101" max="100" step="0.1" value="18">
+                                    <input type="number" id="i_ppl" min="0.101" max="100" step="0.1" value="18">
                                 </div>
                                 <div class="param-row">
                                     <span class="param-label">Депрессия, МПа:</span>
-                                    <input type="range" id="s_dp" min="0.01" max="5" step="0.05" value="0.1">
-                                    <input type="number" id="i_dp" value="0.1">
+                                    <input type="range" id="s_dp" min="0.01" max="18" step="0.05" value="0.1">
+                                    <input type="number" id="i_dp" min="0.01" max="18" step="0.05" value="0.1">
                                 </div>
                             </div>
                         </div>
@@ -124,27 +124,139 @@
                 </div>
             </div>
         </div>
+
+        <div class="row mt-2">
+            <div class="col-12">
+                <div id="step3_container" class="card shadow-sm disabled-overlay">
+                    <div class="card-body">
+                        <h5 class="card-title">ШАГ 3: Исследование зависимостей дебита</h5>
+                        
+                        <div class="row align-items-end g-3">
+                            <div class="col-md-4">
+                                <label for="param_select" class="form-label font-weight-500 small text-muted">Выберите параметр для оси X:</label>
+                                <select id="param_select" class="form-select">
+                                    <option value="h">Толщина пласта (h, м)</option>
+                                    <option value="lg">Длина горизонтального ствола (Lг, м)</option>
+                                    <option value="rc">Радиус скважины (Rc, м)</option>
+                                    <option value="rk">Радиус контура питания (Rк.г, м)</option>
+                                    <option value="v">Коэффициент анизотропии (v)</option>
+                                    <option value="ppl">Пластовое давление (Pпл, МПа)</option>
+                                    <option value="dp">Депрессия (ΔP, МПа)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-danger w-100" style="background-color: #b00000; border-color: #b00000;" onclick="calculateStep3()">Показать зависимость</button>
+                            </div>
+                        </div>
+
+                        <div class="chart-container">
+                            <canvas id="dependencyChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
         let a_star = 0, b_star = 0;
+        let chartInstance = null;
 
         function sync(sliderId, inputId, callback) {
             const s = document.getElementById(sliderId);
             const i = document.getElementById(inputId);
-            s.oninput = () => { i.value = s.value; callback(); };
-            i.oninput = () => { s.value = i.value; callback(); };
+            
+            s.oninput = () => { 
+                i.value = s.value; 
+                callback(); 
+            };
+            
+            i.oninput = () => {
+                let val = parseFloat(i.value);
+                if (isNaN(val)) return;
+
+                const min = parseFloat(s.min);
+                const max = parseFloat(s.max);
+
+                if (val > max) {
+                    val = max;
+                    i.value = val;
+                }
+
+                let clampedVal = val;
+                if (clampedVal < min) clampedVal = min;
+
+                s.value = clampedVal;
+                callback();
+            };
+
+            i.onblur = () => {
+                let val = parseFloat(i.value);
+                const min = parseFloat(s.min);
+                const max = parseFloat(s.max);
+
+                if (isNaN(val) || val < min) val = min;
+                if (val > max) val = max;
+
+                i.value = val;
+                s.value = val;
+                callback();
+            };
         }
 
-        // Привязка слайдеров Шага 1
+        function updateDpLimits() {
+            const pplVal = parseFloat(document.getElementById('i_ppl').value);
+            const dpSlider = document.getElementById('s_dp');
+            const dpInput = document.getElementById('i_dp');
+            
+            dpSlider.max = pplVal;
+            dpInput.max = pplVal;
+            
+            let dpVal = parseFloat(dpInput.value);
+            if (isNaN(dpVal)) dpVal = parseFloat(dpSlider.value);
+
+            if (dpVal > pplVal) {
+                dpSlider.value = pplVal;
+                dpInput.value = pplVal;
+            }
+            calculateStep2();
+        }
+
         sync('s_av', 'i_av', () => {});
         sync('s_bv', 'i_bv', () => {});
         sync('s_h1', 'i_h1', () => {});
         sync('s_rc1', 'i_rc1', () => {});
 
-        // Привязка слайдеров Шага 2 с авторасчетом
-        const step2Params = ['h2', 'lg', 'rc2', 'rk', 'v', 'ppl', 'dp'];
-        step2Params.forEach(p => sync(`s_${p}`, `i_${p}`, calculateStep2));
+        const step2Params = ['h2', 'lg', 'rc2', 'rk', 'v', 'dp'];
+        step2Params.forEach(p => sync(`s_${p}`, `i_${p}`, () => { calculateStep2(); }));
+
+        const s_ppl = document.getElementById('s_ppl');
+        const i_ppl = document.getElementById('i_ppl');
+        
+        s_ppl.oninput = () => { 
+            i_ppl.value = s_ppl.value; 
+            updateDpLimits(); 
+        };
+        
+        i_ppl.oninput = () => {
+            let val = parseFloat(i_ppl.value);
+            if (!isNaN(val)) {
+                if (val > 100) i_ppl.value = 100;
+                let clamped = i_ppl.value;
+                if (clamped < 0.101) clamped = 0.101;
+                s_ppl.value = clamped;
+            }
+            updateDpLimits();
+        };
+
+        i_ppl.onblur = () => {
+            let val = parseFloat(i_ppl.value);
+            if (isNaN(val) || val < 0.101) val = 0.101;
+            if (val > 100) val = 100;
+            i_ppl.value = val;
+            s_ppl.value = val;
+            updateDpLimits();
+        };
 
         async function calculateStep1() {
             const response = await fetch('/calculate_step1', {
@@ -164,19 +276,28 @@
                 document.getElementById('res_a_star').innerText = `a* = ${a_star.toFixed(5)}`;
                 document.getElementById('res_b_star').innerText = `b* = ${b_star.toFixed(5)}`;
                 
-                // Синхронизация значений с шагом 2
+                const h1Max = document.getElementById('s_h1').max;
+                document.getElementById('s_h2').max = h1Max;
+                document.getElementById('i_h2').max = h1Max;
+
                 document.getElementById('i_h2').value = document.getElementById('i_h1').value;
                 document.getElementById('s_h2').value = document.getElementById('i_h1').value;
                 document.getElementById('i_rc2').value = document.getElementById('i_rc1').value;
                 document.getElementById('s_rc2').value = document.getElementById('i_rc1').value;
 
                 document.getElementById('step2_container').classList.remove('disabled-overlay');
-                calculateStep2();
+                document.getElementById('step3_container').classList.remove('disabled-overlay');
+                updateDpLimits();
             }
         }
 
         async function calculateStep2() {
             if (a_star === 0) return;
+            
+            let dpVal = parseFloat(document.getElementById('i_dp').value);
+            let pplVal = parseFloat(document.getElementById('i_ppl').value);
+            if (dpVal > pplVal) dpVal = pplVal;
+
             const response = await fetch('/calculate_step2', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -187,8 +308,8 @@
                     rc: document.getElementById('i_rc2').value,
                     rk: document.getElementById('i_rk').value,
                     v: document.getElementById('i_v').value,
-                    ppl: document.getElementById('i_ppl').value,
-                    dp: document.getElementById('i_dp').value
+                    ppl: pplVal,
+                    dp: dpVal
                 })
             });
             const res = await response.json();
@@ -196,6 +317,85 @@
                 document.getElementById('res_ag').innerText = `a_г = ${res.ag.toFixed(6)}`;
                 document.getElementById('res_bg').innerText = `b_г = ${res.bg.toFixed(8)}`;
                 document.getElementById('res_q').innerText = `Дебит (Q) = ${res.q.toFixed(2)} тыс. м³/сут`;
+            }
+        }
+
+        async function calculateStep3() {
+            if (a_star === 0) return;
+
+            const paramSelect = document.getElementById('param_select');
+            const selectedParam = paramSelect.value;
+            const selectedParamText = paramSelect.options[paramSelect.selectedIndex].text;
+
+            let dpVal = parseFloat(document.getElementById('i_dp').value);
+            let pplVal = parseFloat(document.getElementById('i_ppl').value);
+            if (dpVal > pplVal) dpVal = pplVal;
+
+            const response = await fetch('/calculate_step3', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    a_star, b_star,
+                    h: document.getElementById('i_h2').value,
+                    lg: document.getElementById('i_lg').value,
+                    rc: document.getElementById('i_rc2').value,
+                    rk: document.getElementById('i_rk').value,
+                    v: document.getElementById('i_v').value,
+                    ppl: pplVal,
+                    dp: dpVal,
+                    param: selectedParam
+                })
+            });
+
+            const res = await response.json();
+            if (res.success) {
+                const ctx = document.getElementById('dependencyChart').getContext('2d');
+                
+                if (chartInstance) {
+                    chartInstance.destroy();
+                }
+
+                chartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: res.x,
+                        datasets: [{
+                            label: `Зависимость Q от изменения параметра`,
+                            data: res.y,
+                            borderColor: '#b00000',
+                            backgroundColor: 'rgba(176, 0, 0, 0.05)',
+                            borderWidth: 2.5,
+                            pointRadius: 2,
+                            fill: true,
+                            tension: 0.1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: selectedParamText,
+                                    font: { weight: 'bold', size: 13 }
+                                },
+                                grid: { color: '#e2e8f0' }
+                            },
+                            y: {
+                                title: {
+                                    display: true,
+                                    text: 'Дебит (Q), тыс. м³/сут',
+                                    font: { weight: 'bold', size: 13 }
+                                },
+                                grid: { color: '#e2e8f0' }
+                            }
+                        }
+                    }
+                });
             }
         }
     </script>
