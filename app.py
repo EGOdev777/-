@@ -90,20 +90,11 @@ def calculate_step3():
         x_vals = []
         y_vals = []
 
-        test_values = []
-        
-        if param_to_vary == 'rk':
-            dense_steps = 50
-            for i in range(dense_steps):
-                test_values.append(3.0 + (500.0 - 3.0) * i / dense_steps)
-            
-            sparse_steps = 15
-            for i in range(sparse_steps + 1):
-                test_values.append(500.0 + (20000.0 - 500.0) * i / sparse_steps)
-        else:
-            steps = 20
-            for i in range(steps + 1):
-                test_values.append(p_min + (p_max - p_min) * i / steps)
+        steps = 20
+        test_values = [
+            p_min + (p_max - p_min) * i / steps
+            for i in range(steps + 1)
+        ]
 
         for val in test_values:
             curr_h = val if param_to_vary == 'h' else h
@@ -142,7 +133,7 @@ def calculate_step3():
                 Q = ((-Ag + math.sqrt(radicand)) / (2.0 * Bg)) if Bg > 0 else 0.0
                 Q_thousands = Q * 1000.0
 
-                x_vals.append(round(val, 1) if val > 10 else round(val, 2))
+                x_vals.append(round(val, 6))
                 y_vals.append(round(Q_thousands, 2))
             except (ValueError, ZeroDivisionError):
                 continue
